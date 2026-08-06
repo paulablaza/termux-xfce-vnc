@@ -1,11 +1,11 @@
 # Termux Debian Desktop + VNC
 
-Full Linux desktop (proot Debian + XFCE) on your Android phone, accessed from any PC via VNC. The "phone is a PC" setup.
+Full Linux desktop (proot Debian + XFCE) on your Android phone, accessed from any PC via VNC.
 
-## Quick Commands (what you'll use daily)
+## Quick Commands (daily use)
 
 ```bash
-# START the desktop (first time: it asks you to set a password)
+# START the desktop (first time: it asks you to set a VNC password)
 proot-distro login debian -- vncserver :1 -localhost no
 
 # STOP the desktop
@@ -15,56 +15,90 @@ proot-distro login debian -- vncserver -kill :1
 ifconfig wlan0 | grep inet
 ```
 
-Then on your PC:
-1. Open **TightVNC Viewer** (https://www.tightvnc.com/download.php)
-2. Enter `PHONE-IP:5901`
-3. Enter the VNC password you set
+On your PC: open **TightVNC Viewer** (https://www.tightvnc.com/download.php), connect to `PHONE-IP:5901`, enter your VNC password.
 
-## Setup Tutorial (one time only)
+## Setup (one time, step by step)
 
-### Step 1: Install Termux
+Run each command one at a time in Termux. Wait for it to finish before the next one.
 
-Install from **F-Droid**, NOT the Play Store:
+### 1. Install Termux
+
+From **F-Droid**, not the Play Store:
 - https://f-droid.org/packages/com.termux/
 
-(Play Store version is outdated and broken.)
-
-### Step 2: Run the installer
-
-Download the script first (do NOT pipe it, it needs your input for the password):
+### 2. Update Termux
 
 ```bash
-curl -fsSL -o setup.sh https://raw.githubusercontent.com/paulablaza/termux-xfce-vnc/main/setup.sh
-bash setup.sh
+pkg update -y && pkg upgrade -y
 ```
 
-It will:
-1. Update Termux
-2. Install proot-distro
-3. Install Debian (~5 min)
-4. Install XFCE desktop + TigerVNC inside Debian (~10 min)
-5. Start the desktop - it asks you to create a VNC password
+### 3. Install proot-distro
 
-Total time: 15-20 minutes. Let it run.
+```bash
+pkg install proot-distro -y
+```
 
-### Step 3: Connect from your PC
+### 4. Install Debian (~5 min)
 
-1. Install TightVNC Viewer on Windows
-2. Find your phone IP (run `ifconfig wlan0 | grep inet` in Termux)
-3. Phone and PC on same WiFi
-4. Open TightVNC Viewer, enter `PHONE-IP:5901`
-5. Enter the VNC password you set in Step 2
+```bash
+proot-distro install debian
+```
 
-### Step 4: Enter Debian (for installing apps)
+### 5. Enter Debian
 
 ```bash
 proot-distro login debian
 ```
 
-You're now in Debian. Install anything:
+You should now see a `root@localhost` prompt. Everything below happens inside Debian.
+
+### 6. Update Debian
 
 ```bash
-# Example
+apt update -y
+```
+
+### 7. Install desktop + VNC (~10 min)
+
+```bash
+apt install -y xfce4 xfce4-goodies tigervnc-standalone-server tigervnc-common tigervnc-tools dbus-x11 xauth xdg-utils menu
+```
+
+### 8. Create the VNC startup file
+
+```bash
+mkdir -p ~/.vnc ~/.config/tigervnc
+printf '#!/bin/bash\nunset SESSION_MANAGER\nunset DBUS_SESSION_BUS_ADDRESS\nexec dbus-launch --exit-with-session startxfce4\n' > ~/.vnc/xstartup
+chmod +x ~/.vnc/xstartup
+```
+
+### 9. Leave Debian, back to Termux
+
+```bash
+exit
+```
+
+### 10. Start the desktop
+
+```bash
+proot-distro login debian -- vncserver :1 -localhost no
+```
+
+First run: it asks you to create a VNC password (max 8 chars). Remember it.
+
+### 11. Connect from your PC
+
+1. Install TightVNC Viewer on Windows
+2. Phone and PC on the same WiFi
+3. Open TightVNC Viewer, enter `PHONE-IP:5901`
+4. Enter your VNC password
+
+Done. You have a Linux desktop on your PC, powered by your phone.
+
+## Install apps inside Debian
+
+```bash
+proot-distro login debian
 apt install -y python3 pip git
 ```
 
@@ -98,17 +132,10 @@ proot-distro login debian -- vncpasswd
 
 **Want audio?**
 ```bash
-# In Termux (base)
+# In Termux (base, not inside Debian)
 pkg install pulseaudio
 pulseaudio --start --load="module-native-protocol-tcp auth-ip-acl=127.0.0.1 auth-anonymous=1" --exit-idle-time=-1
 ```
-
-## What's inside
-
-- **proot Debian** - full Linux container (no root needed)
-- **XFCE** - lightweight desktop
-- **TigerVNC** - remote desktop server
-- **dbus-x11** - required for XFCE (not auto-installed)
 
 ## Why proot instead of native Termux?
 
