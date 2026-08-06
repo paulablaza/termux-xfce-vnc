@@ -1,90 +1,117 @@
-# Termux XFCE Desktop + VNC
+# Termux Debian Desktop + VNC
 
-One-click Linux desktop on your Android phone, accessible from any PC via VNC.
+Full Linux desktop (proot Debian + XFCE) on your Android phone, accessed from any PC via VNC. The "phone is a PC" setup.
 
-## One-Click Install (Easiest)
-
-Open Termux and paste this ENTIRE line, then press Enter. Password will be `123456`:
+## Quick Commands (what you'll use daily)
 
 ```bash
-pkg update -y && pkg upgrade -y && pkg install -y x11-repo xfce4 tigervnc dbus && mkdir -p ~/.vnc && printf '123456' | vncpasswd -f > ~/.vnc/passwd && chmod 600 ~/.vnc/passwd && printf '#!/data/data/com.termux/files/usr/bin/sh\nexec dbus-launch --exit-with-session xfce4-session\n' > ~/.vnc/xstartup && chmod +x ~/.vnc/xstartup && vncserver -kill :1 2>/dev/null; vncserver -localhost no :1
+# START the desktop
+proot-distro login debian -- vncserver :1 -localhost no
+
+# STOP the desktop
+proot-distro login debian -- vncserver -kill :1
+
+# Find your phone IP
+ifconfig wlan0 | grep inet
 ```
 
-Wait 5-15 minutes for install, then the desktop starts automatically.
+Then on your PC:
+1. Open **TightVNC Viewer** (https://www.tightvnc.com/download.php)
+2. Enter `PHONE-IP:5901`
+3. Password: `123456`
 
-## Connect from PC
+## Setup Tutorial (one time only)
 
-1. Install [TightVNC Viewer](https://www.tightvnc.com/download.php) (free, 2MB)
-2. Phone and PC on same WiFi
-3. Find your phone IP: `ifconfig wlan0 | grep inet`
-4. Open TightVNC Viewer, enter `phone-IP:5901`
+### Step 1: Install Termux
+
+Install from **F-Droid**, NOT the Play Store:
+- https://f-droid.org/packages/com.termux/
+
+(Play Store version is outdated and broken.)
+
+### Step 2: Run the one-click installer
+
+Open Termux and paste this whole line, then press Enter:
+
+```bash
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/paulablaza/termux-xfce-vnc/main/setup.sh)"
+```
+
+It will:
+1. Update Termux
+2. Install proot-distro
+3. Install Debian (~5 min)
+4. Install XFCE desktop + TigerVNC inside Debian (~10 min)
+5. Start the desktop automatically
+
+Total time: 15-20 minutes. Let it run.
+
+### Step 3: Connect from your PC
+
+1. Install TightVNC Viewer on Windows
+2. Find your phone IP (run `ifconfig wlan0 | grep inet` in Termux)
+3. Phone and PC on same WiFi
+4. Open TightVNC Viewer, enter `PHONE-IP:5901`
 5. Password: `123456`
 
-## Manual Install (One by One)
+### Step 4: Enter Debian (for installing apps)
 
 ```bash
-pkg update -y && pkg upgrade -y
-pkg install x11-repo -y
-pkg install xfce4 tigervnc dbus -y
-vncpasswd
-mkdir -p ~/.vnc
-printf '#!/data/data/com.termux/files/usr/bin/sh\nexec dbus-launch --exit-with-session xfce4-session\n' > ~/.vnc/xstartup
-chmod +x ~/.vnc/xstartup
-vncserver -localhost no :1
+proot-distro login debian
 ```
 
-## Commands
+You're now in Debian. Install anything:
 
-| Action | Command |
-|--------|---------|
-| Start desktop | `vncserver -localhost no :1` |
-| Stop desktop | `vncserver -kill :1` |
-| Find phone IP | `ifconfig wlan0 \| grep inet` |
-
-## Requirements
-
-- Android 7.0+
-- Termux (from [F-Droid](https://f-droid.org/packages/com.termux/) or [GitHub](https://github.com/termux/termux-app/releases))
-- ~500MB free storage
-- WiFi connection
+```bash
+# Example
+apt install -y python3 pip git
+```
 
 ## FAQ
 
-**Black screen on VNC?**
+**Black screen when connecting?**
 ```bash
-vncserver -kill :1
-vncserver -localhost no :1
+proot-distro login debian -- vncserver -kill :1
+proot-distro login debian -- vncserver :1 -localhost no
 ```
 
-**Can't connect from PC?**
-- Make sure `-localhost no` is in the start command
-- Check phone and PC are on same WiFi
-- Try `ifconfig wlan0` to find your phone IP
+**Desktop feels laggy?**
+- Lower the resolution:
+```bash
+proot-distro login debian -- vncserver -kill :1
+proot-distro login debian -- vncserver :1 -localhost no -geometry 1280x720 -depth 16
+```
+- Turn off compositor effects:
+```bash
+proot-distro login debian -- xfconf-query -c xfwm4 -p /general/use_compositing -s false
+```
+- Disable Oppo's battery optimization for Termux (Settings > Battery > Termux > Don't optimize)
 
 **"pkg cannot run as root"?**
-- Your shell is running as root (tsu or proot session). Type `exit` until you see the normal `~ $` prompt, or open a new Termux session.
+Your shell is inside a root session. Type `exit` until you see the normal `~ $` prompt, then run the command again.
 
 **Change VNC password?**
 ```bash
-vncpasswd
+proot-distro login debian -- vncpasswd
 ```
 
 **Want audio?**
 ```bash
+# In Termux (base)
 pkg install pulseaudio
 pulseaudio --start --load="module-native-protocol-tcp auth-ip-acl=127.0.0.1 auth-anonymous=1" --exit-idle-time=-1
-# Then add to ~/.vnc/xstartup before the xfce4-session line:
-# export PULSE_SERVER=127.0.0.1
 ```
 
-## What This Installs
+## What's inside
 
-- **XFCE** - Lightweight desktop environment
-- **TigerVNC** - Remote desktop server (PC access)
-- **dbus** - Required for XFCE to function (not auto-installed)
-- **x11-repo** - Unlocks GUI packages in Termux
+- **proot Debian** - full Linux container (no root needed)
+- **XFCE** - lightweight desktop
+- **TigerVNC** - remote desktop server
+- **dbus-x11** - required for XFCE (not auto-installed)
 
-Runs on native Termux. No root, no proot, no chroot needed.
+## Why proot instead of native Termux?
+
+Native Termux is faster but can't run glibc apps (Claude Code, OpenCode, Codex CLI). proot Debian runs everything, and over VNC the speed difference is negligible.
 
 ## License
 

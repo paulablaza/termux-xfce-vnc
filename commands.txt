@@ -1,29 +1,42 @@
-# Termux XFCE Desktop - ONE BY ONE
-# Paste these in Termux one at a time, wait for each to finish.
+# proot Debian + XFCE + VNC - copy paste one by one
+# Run in Termux. Password will be: 123456
 
-# 1. Update packages
+# 1. Update Termux
 pkg update -y && pkg upgrade -y
 
-# 2. Unlock GUI packages
-pkg install x11-repo -y
+# 2. Install proot-distro
+pkg install proot-distro -y
 
-# 3. Install desktop + VNC + dbus
-pkg install xfce4 tigervnc dbus -y
+# 3. Install Debian (~5 min)
+proot-distro install debian
 
-# 4. Set VNC password (max 8 chars, remember it)
-vncpasswd
+# 4. Install desktop inside Debian (~10 min)
+proot-distro login debian -- bash -s << 'PROOT_SCRIPT'
+export DEBIAN_FRONTEND=noninteractive
+apt-get update -y
+apt-get install -y -o Dpkg::Options::=--force-confnew --no-install-recommends \
+    xfce4 xfce4-goodies \
+    tigervnc-standalone-server tigervnc-common tigervnc-tools \
+    dbus-x11 xauth xdg-utils menu
+mkdir -p /root/.vnc /root/.config/tigervnc
+chmod 700 /root/.vnc /root/.config/tigervnc
+echo '123456' | vncpasswd -f > /root/.vnc/passwd
+cat > /root/.vnc/xstartup << 'XSTARTUP'
+#!/bin/bash
+unset SESSION_MANAGER
+unset DBUS_SESSION_BUS_ADDRESS
+exec dbus-launch --exit-with-session startxfce4
+XSTARTUP
+chmod +x /root/.vnc/xstartup
+PROOT_SCRIPT
 
-# 5. Create the startup file
-mkdir -p ~/.vnc
-printf '#!/data/data/com.termux/files/usr/bin/sh\nexec dbus-launch --exit-with-session xfce4-session\n' > ~/.vnc/xstartup
-chmod +x ~/.vnc/xstartup
+# 5. Start the desktop
+proot-distro login debian -- vncserver -kill :1 2>/dev/null
+proot-distro login debian -- vncserver :1 -localhost no
 
-# 6. Start the desktop (this makes it visible to your PC)
-vncserver -localhost no :1
-
-# 7. Find your phone IP
+# 6. Find phone IP
 ifconfig wlan0 | grep inet
 
-# Then on your PC: open TightVNC Viewer, connect to PHONE-IP:5901
-# Stop:  vncserver -kill :1
-# Start: vncserver -localhost no :1
+# From PC: TightVNC Viewer -> PHONE-IP:5901 -> password 123456
+# Stop:  proot-distro login debian -- vncserver -kill :1
+# Start: proot-distro login debian -- vncserver :1 -localhost no
