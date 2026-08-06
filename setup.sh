@@ -1,9 +1,9 @@
 #!/data/data/com.termux/files/usr/bin/bash
 # ============================================================================
-# Termux proot Debian + XFCE + VNC - ONE CLICK
+# Termux proot Debian + XFCE + VNC
 # Full Linux desktop on your phone, access from any PC via VNC
-# Password: 123456
 # ============================================================================
+# Run with:  bash setup.sh   (NOT piped - needs your input for password)
 
 echo "========================================="
 echo "  proot Debian + XFCE + VNC Setup"
@@ -32,8 +32,6 @@ apt-get install -y -o Dpkg::Options::=--force-confnew --no-install-recommends \
 mkdir -p /root/.vnc /root/.config/tigervnc
 chmod 700 /root/.vnc /root/.config/tigervnc
 
-echo '123456' | vncpasswd -f > /root/.vnc/passwd
-
 cat > /root/.vnc/xstartup << 'XSTARTUP'
 #!/bin/bash
 unset SESSION_MANAGER
@@ -47,18 +45,23 @@ PROOT_SCRIPT
 
 echo ""
 echo "========================================="
-echo "  Starting desktop..."
+echo "  Everything installed!"
 echo "========================================="
+echo "  Now start the desktop. It will ask you"
+echo "  to create a VNC password (max 8 chars)."
+echo "  Remember it - you'll type it on your PC."
+echo ""
+
+# Start VNC - prompts for password on first run
 proot-distro login debian -- vncserver -kill :1 2>/dev/null
 proot-distro login debian -- vncserver :1 -localhost no
 
 echo ""
 echo "========================================="
-echo "  DONE! Desktop is running."
+echo "  Desktop is running!"
 echo "========================================="
 echo "  From your PC:"
 echo "  TightVNC Viewer -> PHONE-IP:5901"
-echo "  Password: 123456"
 echo ""
 echo "  Find phone IP:  ifconfig wlan0 | grep inet"
 echo "  Start:  proot-distro login debian -- vncserver :1 -localhost no"

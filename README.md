@@ -5,7 +5,7 @@ Full Linux desktop (proot Debian + XFCE) on your Android phone, accessed from an
 ## Quick Commands (what you'll use daily)
 
 ```bash
-# START the desktop
+# START the desktop (first time: it asks you to set a password)
 proot-distro login debian -- vncserver :1 -localhost no
 
 # STOP the desktop
@@ -18,7 +18,7 @@ ifconfig wlan0 | grep inet
 Then on your PC:
 1. Open **TightVNC Viewer** (https://www.tightvnc.com/download.php)
 2. Enter `PHONE-IP:5901`
-3. Password: `123456`
+3. Enter the VNC password you set
 
 ## Setup Tutorial (one time only)
 
@@ -29,12 +29,13 @@ Install from **F-Droid**, NOT the Play Store:
 
 (Play Store version is outdated and broken.)
 
-### Step 2: Run the one-click installer
+### Step 2: Run the installer
 
-Open Termux and paste this whole line, then press Enter:
+Download the script first (do NOT pipe it, it needs your input for the password):
 
 ```bash
-bash -c "$(curl -fsSL https://raw.githubusercontent.com/paulablaza/termux-xfce-vnc/main/setup.sh)"
+curl -fsSL -o setup.sh https://raw.githubusercontent.com/paulablaza/termux-xfce-vnc/main/setup.sh
+bash setup.sh
 ```
 
 It will:
@@ -42,7 +43,7 @@ It will:
 2. Install proot-distro
 3. Install Debian (~5 min)
 4. Install XFCE desktop + TigerVNC inside Debian (~10 min)
-5. Start the desktop automatically
+5. Start the desktop - it asks you to create a VNC password
 
 Total time: 15-20 minutes. Let it run.
 
@@ -52,7 +53,7 @@ Total time: 15-20 minutes. Let it run.
 2. Find your phone IP (run `ifconfig wlan0 | grep inet` in Termux)
 3. Phone and PC on same WiFi
 4. Open TightVNC Viewer, enter `PHONE-IP:5901`
-5. Password: `123456`
+5. Enter the VNC password you set in Step 2
 
 ### Step 4: Enter Debian (for installing apps)
 
@@ -85,12 +86,12 @@ proot-distro login debian -- vncserver :1 -localhost no -geometry 1280x720 -dept
 ```bash
 proot-distro login debian -- xfconf-query -c xfwm4 -p /general/use_compositing -s false
 ```
-- Disable Oppo's battery optimization for Termux (Settings > Battery > Termux > Don't optimize)
+- Disable battery optimization for Termux (Settings > Battery > Termux > Don't optimize)
 
 **"pkg cannot run as root"?**
 Your shell is inside a root session. Type `exit` until you see the normal `~ $` prompt, then run the command again.
 
-**Change VNC password?**
+**Forgot your VNC password?**
 ```bash
 proot-distro login debian -- vncpasswd
 ```

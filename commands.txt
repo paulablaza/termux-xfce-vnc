@@ -1,5 +1,5 @@
 # proot Debian + XFCE + VNC - copy paste one by one
-# Run in Termux. Password will be: 123456
+# Run in Termux.
 
 # 1. Update Termux
 pkg update -y && pkg upgrade -y
@@ -20,7 +20,6 @@ apt-get install -y -o Dpkg::Options::=--force-confnew --no-install-recommends \
     dbus-x11 xauth xdg-utils menu
 mkdir -p /root/.vnc /root/.config/tigervnc
 chmod 700 /root/.vnc /root/.config/tigervnc
-echo '123456' | vncpasswd -f > /root/.vnc/passwd
 cat > /root/.vnc/xstartup << 'XSTARTUP'
 #!/bin/bash
 unset SESSION_MANAGER
@@ -31,12 +30,13 @@ chmod +x /root/.vnc/xstartup
 PROOT_SCRIPT
 
 # 5. Start the desktop
+# First time: it asks you to create a VNC password (max 8 chars). Remember it.
 proot-distro login debian -- vncserver -kill :1 2>/dev/null
 proot-distro login debian -- vncserver :1 -localhost no
 
 # 6. Find phone IP
 ifconfig wlan0 | grep inet
 
-# From PC: TightVNC Viewer -> PHONE-IP:5901 -> password 123456
+# From PC: TightVNC Viewer -> PHONE-IP:5901 -> the password you set
 # Stop:  proot-distro login debian -- vncserver -kill :1
 # Start: proot-distro login debian -- vncserver :1 -localhost no
